@@ -22,3 +22,8 @@ class UsersAdminView(ModelView):
         "created_date",
     )
     column_default_sort = ("created_date", True)
+
+    def on_model_change(self, form, model, is_created):
+        model.password = bcrypt.generate_password_hash(
+            model.password, current_app.config.get("BCRYPT_LOG_ROUNDS")
+        ).decode()

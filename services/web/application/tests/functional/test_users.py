@@ -7,7 +7,7 @@ def test_add_user(test_app, test_database):
     client = test_app.test_client()
     resp = client.post(
         "/users",
-        data=json.dumps({"username": "jonny", "email": "jon@sessionsdev.com"}),
+        data=json.dumps({"username": "jonny", "email": "jon@sessionsdev.com", "password": "password"}),
         content_type="application/json",
     )
     data = json.loads(resp.data.decode())
@@ -43,12 +43,12 @@ def test_add_user_duplicate_email(test_app, test_database):
     client = test_app.test_client()
     client.post(
         "/users",
-        data=json.dumps({"username": "jonny", "email": "jon@sessionsdev.com"}),
+        data=json.dumps({"username": "jonny", "email": "jon@sessionsdev.com", "password": "password"}),
         content_type="application/json",
     )
     resp = client.post(
         "/users",
-        data=json.dumps({"username": "jonny", "email": "jon@sessionsdev.com"}),
+        data=json.dumps({"username": "jonny", "email": "jon@sessionsdev.com", "password": "password"}),
         content_type="application/json",
     )
     data = json.loads(resp.data.decode())
@@ -57,13 +57,14 @@ def test_add_user_duplicate_email(test_app, test_database):
 
 
 def test_single_user(test_app, test_database, add_user):
-    user = add_user("jonny", "jon@sessionsdev.com")
+    user = add_user("jonny", "jon@sessionsdev.com", "password")
     client = test_app.test_client()
     resp = client.get(f"/users/{user.id}")
     data = json.loads(resp.data.decode())
     assert resp.status_code == 200
     assert "jonny" in data["username"]
     assert "jon@sessionsdev.com" in data["email"]
+    assert "password" not in data
 
 
 def test_single_user_incorrect_id(test_app, test_database):
@@ -76,8 +77,8 @@ def test_single_user_incorrect_id(test_app, test_database):
 
 def test_all_users(test_app, test_database, add_user):
     test_database.session.query(User).delete()
-    add_user("jonny", "jon@sessionsdev.com")
-    add_user("kristen", "kristen@test.com")
+    add_user("jonny", "jon@sessionsdev.com", "password")
+    add_user("kristen", "kristen@test.com", "password")
     client = test_app.test_client()
     resp = client.get("/users")
     data = json.loads(resp.data.decode())
@@ -87,11 +88,13 @@ def test_all_users(test_app, test_database, add_user):
     assert "jon@sessionsdev.com" in data[0]["email"]
     assert "kristen" in data[1]["username"]
     assert "kristen@test.com" in data[1]["email"]
+    assert "password" not in data[0]
+    assert "password" not in data[1]
 
 
 def test_remove_user(test_app, test_database, add_user):
     test_database.session.query(User).delete()
-    user = add_user("user-to-be-remove", "remove@sessionsdev.com")
+    user = add_user("user-to-be-remove", "remove@sessionsdev.com", "password")
     client = test_app.test_client()
     resp_one = client.get("/users")
     data = json.loads(resp_one.data.decode())

@@ -3,6 +3,7 @@ from flask_restplus import Api, Resource, fields, Namespace
 
 from application import db
 from application.api.drills.models import Drill
+from application.api.drills.services import find_drill
 
 drills_namespace = Namespace("drills")
 
@@ -49,6 +50,23 @@ class Drills(Resource):
             drills_namespace.abort(404, f"Drill {drill_id} not found")
         return drill, 200
 
+class FindDrill(Resource):
+    @drills_namespace.marshal_with(drill)
+    def post(self):
+        data = request.get_json()
+        diameter = data.get('diameter')
+        depth = data.get('depth')
+        machine = data.get('machine')
+        material = data.get('material')
+
+        drill = find_drill(diameter, depth, machine, material)
+
+        if not drill:
+            drills_namespace.abort(404, f"Drill not found")
+        return drill, 200
+
+
 
 drills_namespace.add_resource(DrillsList, "")
 drills_namespace.add_resource(Drills, "/<int:drill_id>")
+drills_namespace.add_resource(FindDrill, "/find-drill")
