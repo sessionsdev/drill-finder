@@ -13,28 +13,10 @@ const NavBar = (props) => {
     <div className="navbar-menu">
       <div className="navbar-start">
         <Link to="/find-drill" className="navbar-item" data-testid="nav-find-drill">Find Drill</Link>
-        <Link to="/users" className="navbar-item" data-testid="nav-find-drill">Users</Link>
         <Link to="/about" className="navbar-item" data-testid="nav-about">About</Link>
-      </div>
-      <div className="navbar-end">
-        <Link to="/register" className="navbar-item" data-testid="nav-register">Register</Link>
-        <Link to="/login" className="navbar-item" data-testid="nav-login">Log In</Link>
       </div>
     </div>
   )
-  if (props.isAuthenticated()) {
-    menu = (
-      <div className="navbar-menu">
-        <div className="navbar-start">
-          <Link to="/about" className="navbar-item" data-testid="nav-about">About</Link>
-          <Link to="/status" className="navbar-item" data-testid="nav-status">User Status</Link>
-        </div>
-        <div className="navbar-end">
-          <span onClick={props.logoutUser} className="navbar-item link" data-testid="nav-logout">Log Out</span>
-        </div>
-      </div>
-    )
-  }
   return (
     <nav className="navbar is-dark" role="navigation" aria-label="main navigation">
       <section className="container">
@@ -60,8 +42,6 @@ const NavBar = (props) => {
 
 NavBar.propTypes = {
   title: PropTypes.string.isRequired,
-  logoutUser: PropTypes.func.isRequired,
-  isAuthenticated: PropTypes.func.isRequired
 };
 
 export default NavBar;

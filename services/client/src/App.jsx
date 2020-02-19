@@ -3,15 +3,10 @@ import axios from "axios";
 import { Route, Switch } from "react-router-dom";
 import Modal from 'react-modal';
 
-import UsersList from "./components/UsersList";
-import AddUser from "./components/AddUser";
 import About from "./components/About";
 import NavBar from "./components/NavBar";
-import LoginForm from "./components/LoginForm";
-import RegisterForm from "./components/RegisterForm";
-import UserStatus from "./components/UserStatus"
-import Message from './components/Message';
 import FindDrillForm from './components/FindDrillForm';
+import Message from './components/Message';
 
 Modal.setAppElement(document.getElementById("root"));
 
@@ -30,17 +25,14 @@ class App extends Component {
   constructor() {
     super();
     this.state = {
-      users: [],
       drills: [],
       title: "Drill Finder",
-      accessToken: null,
       messageType: null,
       messageText: null,
       showModal: false
     };
   }
   componentDidMount() {
-    this.getUsers();
     this.getDrills();
   }
 
@@ -52,17 +44,6 @@ class App extends Component {
     this.setState({ showModal: false });
   };
 
-
-  getUsers() {
-    axios
-      .get(`${process.env.REACT_APP_WEB_SERVICE_URL}/users`)
-      .then(res => {
-        this.setState({ users: res.data });
-      })
-      .catch(err => {
-        console.log(err);
-      });
-  }
 
   getDrills() {
     axios
@@ -76,49 +57,8 @@ class App extends Component {
     });
 
   }
-  addUser = (data) => {
-    axios
-      .post(`${process.env.REACT_APP_WEB_SERVICE_URL}/users`, data)
-      .then(res => {
-        this.getUsers();
-        this.setState({ username: "", email: "" });
-        this.handleCloseModal();
-        this.createMessage('success', 'User added.');
-      })
-      .catch(err => {
-        console.log(err);
-        this.handleCloseModal();
-        this.createMessage('danger', 'That user already exists.');
-      });
-  }
+  
 
-
-  handleRegisterFormSubmit = (data) => {
-    const url = `${process.env.REACT_APP_WEB_SERVICE_URL}/auth/register`
-    axios.post(url, data)
-    .then((res) => {
-      console.log(res.data);
-      this.createMessage('success', 'You have registered successfully.');
-    })
-    .catch((err) => { 
-      console.log(err);
-      this.createMessage('danger', 'That user already exists.');
-     });
-    
-  };
-
-  handleLoginFormSubmit = (data) => {
-    const url = `${process.env.REACT_APP_WEB_SERVICE_URL}/auth/login`
-    axios.post(url, data)
-    .then((res) => {
-      this.setState({ accessToken: res.data.access_token });
-      this.getUsers();
-      window.localStorage.setItem('refreshToken', res.data.refresh_token);
-      this.createMessage('success', 'You have logged in successfully.')
-    })
-    .catch((err) => { console.log(err); });
-    this.createMessage('danger', 'Incorrect email and/or password.');
-  };
 
   handleFindDrillFormSubmit = (data) => {
     const url = `${process.env.REACT_APP_WEB_SERVICE_URL}/drills/find-drill`
@@ -128,40 +68,6 @@ class App extends Component {
       })
     console.log("Sanity check!")
   }
-
-  isAuthenticated = () => {
-    if (this.state.accessToken || this.validRefresh()) {
-      return true;
-    }
-    return false;
-  };
-
-  validRefresh() {
-    const token = window.localStorage.getItem('refreshToken');
-    if (token) {
-      axios
-        .post(`${process.env.REACT_APP_WEB_SERVICE_URL}/auth/refresh`, {
-        refresh_token: token
-      })
-      .then(res => {
-        this.setState({ accessToken: res.data.access_token});
-        this.getUsers();
-        window.localStorage.setItem('refreshToken', res.data.refresh_token);
-        return true;
-      })
-      .catch(err => {
-        return false;
-      });
-    }
-    return false;
-  };
-
-
-  logoutUser = () => {
-    window.localStorage.removeItem('refreshToken');
-    this.setState({ accessToken: null });
-    this.createMessage('success', 'You have logged out.');
-  };
 
 
   createMessage = (type, text) => {
@@ -181,17 +87,6 @@ class App extends Component {
     });
   };
 
-  removeUser = (user_id) => {
-    axios.delete(`${process.env.REACT_APP_WEB_SERVICE_URL}/users/${user_id}`,)
-    .then((res) => {
-      this.getUsers();
-      this.createMessage('success', 'User removed.');
-    })
-    .catch((err) => {
-      console.log(err);
-      this.createMessage('danger', 'Something went wrong.');
-    });
-  };
 
 
   render() {
@@ -199,8 +94,6 @@ class App extends Component {
       <div>
         <NavBar 
         title={this.state.title} 
-        logoutUser={this.logoutUser}
-        isAuthenticated={this.isAuthenticated}
         />
         <section className="section">
           <div className="container">
@@ -227,64 +120,8 @@ class App extends Component {
                   />
                 )} 
                 />
-                <Route exact path='/users' render={() => (
-                    <div>
-                      <h1 className="title is-1">Users</h1>
-                      <hr /><br />
-                      {this.isAuthenticated() && (
-                        <button
-                          onClick={this.handleOpenModal}
-                          className="button is-primary"
-                        >
-                          Add User
-                        </button>
-                      )}
-                      <br /><br />
-                      <Modal
-                        isOpen={this.state.showModal}
-                        style={modalStyles}
-                      >
-                        <div className="modal is-active">
-                          <div className="modal-background" />
-                          <div className="modal-card">
-                            <header className="modal-card-head">
-                              <p className="modal-card-title">Add User</p>
-                              <button className="delete" aria-label="close" onClick={this.handleCloseModal} />
-                            </header>
-                            <section className="modal-card-body">
-                              <AddUser addUser={this.addUser} />
-                            </section>
-                          </div>
-                        </div>
-                      </Modal>
-                      <UsersList 
-                        users={this.state.users} 
-                        removeUser={this.removeUser} 
-                        isAuthenticated={this.isAuthenticated}
-                      />
-                    </div>
-                  )} />
+              
                 <Route exact path="/about" component={About} />
-                <Route exact path='/register' render={() => (
-                  <RegisterForm
-                    handleRegisterFormSubmit={this.handleRegisterFormSubmit}
-                    isAuthenticated={this.isAuthenticated}
-                  />
-                )} 
-                />
-                <Route exact path='/login' render={() => (
-                  <LoginForm
-                    handleLoginFormSubmit={this.handleLoginFormSubmit}
-                    isAuthenticated={this.isAuthenticated}
-                  />
-                )} 
-                />
-                <Route exact path='/status' render={() => (
-                  <UserStatus 
-                    accessToken={this.state.accessToken}
-                    isAuthenticated={this.isAuthenticated} 
-                  />
-                )} />
                 </Switch>
               </div>
             </div>
